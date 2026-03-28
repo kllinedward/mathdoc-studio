@@ -1,0 +1,4 @@
+streamlit>=1.30
+python-docx>=1.1
+latex2mathml>=3.77
+lxml>=5.0
