@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MathDoc Studio — 線上版</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/temml@0.10.30/dist/temml.min.js"></script>
+<style>
+  :root{--teal:#0d9488;--teal2:#14b8a6;--mint:#f0fdfa;--line:#99f6e4;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+       background:#f7fafc;color:#1f2937;line-height:1.6;}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px;}
+  .brand{background:linear-gradient(135deg,#0d9488,#2dd4bf,#a7f3d0);color:#fff;
+         padding:1.4rem 1.6rem;border-radius:14px;text-align:center;
+         box-shadow:0 4px 16px rgba(13,148,136,.22);margin-bottom:1rem;}
+  .brand h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:.02em;}
+  .brand p{margin:.3rem 0 0;opacity:.92;font-size:.85rem;}
+  .layout{display:flex;gap:16px;align-items:flex-start;}
+  .side{flex:0 0 300px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;}
+  .main{flex:1;min-width:0;}
+  @media(max-width:860px){.layout{flex-direction:column;}.side{flex:none;width:100%;}}
+  h3.sec{font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--teal);
+         margin:1rem 0 .4rem;}
+  h3.sec:first-child{margin-top:.2rem;}
+  label.fld{display:block;font-size:.8rem;color:#6b7280;margin:.5rem 0 .15rem;}
+  select,textarea,input{width:100%;padding:.5rem .6rem;border:1px solid #d1d5db;border-radius:9px;
+         font:inherit;background:#fff;}
+  textarea{resize:vertical;line-height:1.5;font-family:"SFMono-Regular",Consolas,monospace;font-size:.88rem;}
+  .radio{display:flex;flex-direction:column;gap:.35rem;}
+  .radio label{display:flex;align-items:center;gap:.5rem;font-size:.86rem;cursor:pointer;
+         padding:.45rem .55rem;border:1px solid #e5e7eb;border-radius:9px;}
+  .radio label:has(input:checked){border-color:var(--teal);background:var(--mint);font-weight:600;}
+  .step{display:inline-flex;align-items:center;gap:.5rem;font-size:1.05rem;font-weight:700;
+        color:#1f2937;margin:1rem 0 .4rem;}
+  .badge{background:var(--teal);color:#fff;width:24px;height:24px;border-radius:50%;
+         display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;}
+  .btn{width:100%;padding:.7rem;border:none;border-radius:10px;font:inherit;font-weight:700;
+       cursor:pointer;transition:.15s;}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;}
+  .btn-primary:hover{filter:brightness(1.05);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-ghost{background:#fff;border:2px solid var(--teal2);color:var(--teal);}
+  .btn-ghost:hover{background:var(--mint);}
+  .row{display:flex;gap:8px;}
+  .stat-row{display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0;}
+  .stat{flex:1;min-width:80px;background:var(--mint);border:1px solid var(--line);
+        border-radius:10px;padding:.6rem .3rem;text-align:center;}
+  .stat .num{font-size:1.5rem;font-weight:800;color:var(--teal);}
+  .stat .lbl{font-size:.72rem;color:#6b7280;}
+  .tabs{display:flex;gap:.4rem;margin:.8rem 0 .5rem;border-bottom:2px solid #e5e7eb;}
+  .tabs button{background:none;border:none;padding:.5rem .8rem;font:inherit;font-weight:600;
+        color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
+  .tabs button.active{color:var(--teal);border-bottom-color:var(--teal);}
+  .panel{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;min-height:120px;}
+  .panel table{border-collapse:collapse;width:100%;margin:.6rem 0;}
+  .panel th,.panel td{border:1px solid #cbd5e1;padding:.4rem .6rem;text-align:left;}
+  .panel th{background:#e2e8f0;}
+  .eqitem{padding:.6rem 0;border-bottom:1px dashed #e5e7eb;}
+  .tag{display:inline-block;color:#fff;padding:1px 9px;border-radius:10px;font-size:.72rem;
+       vertical-align:middle;margin-left:.3rem;}
+  code.tex{background:#f1f5f9;padding:.15rem .4rem;border-radius:5px;font-size:.82rem;}
+  details{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.5rem .7rem;margin:.5rem 0;}
+  details summary{cursor:pointer;font-weight:600;font-size:.86rem;}
+  pre{background:#0f172a;color:#e2e8f0;padding:.7rem;border-radius:8px;overflow:auto;font-size:.78rem;}
+  .note{background:var(--mint);border:1px solid var(--line);border-radius:10px;
+        padding:.7rem .9rem;font-size:.85rem;margin:.6rem 0;}
+  .empty{text-align:center;color:#9ca3af;padding:2.5rem 0;}
+  .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;
+        padding:.6rem .8rem;font-size:.82rem;margin-bottom:1rem;}
+  math{font-size:1.05em;}
+  .hide{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>∫ MathDoc Studio</h1>
+    <p>純瀏覽器版 · 將 AI 生成的數學內容一鍵轉為專業 Word 文件</p>
+  </div>
+
+  <div class="warn">
+    ⚠️ 本工具 100% 在你的瀏覽器內執行，內容不會上傳。可直接把此 HTML 檔上傳到 GitHub Pages / Netlify 等靜態空間即成為線上網站。若載入函式庫被沙盒封鎖，請將程式碼另存後在本機或自己的網站開啟。
+  </div>
+
+  <div class="layout">
+    <!-- 側邊設定 -->
+    <aside class="side">
+      <h3 class="sec">📤 輸出模式</h3>
+      <div class="radio" id="modeBox">
+        <label><input type="radio" name="mode" value="omml" checked> Word 內建方程式 (OMML)</label>
+        <label><input type="radio" name="mode" value="mathtype"> MathType 文字模式 ⭐</label>
+      </div>
+
+      <h3 class="sec">🎨 文件樣式</h3>
+      <label class="fld">範本</label>
+      <select id="tpl">
+        <option value="academic">📄 學術論文</option>
+        <option value="homework">📝 課堂作業</option>
+        <option value="exam" selected>📋 考卷試題</option>
+        <option value="custom">⚙️ 自訂設定</option>
+      </select>
+
+      <div id="customBox" class="hide">
+        <label class="fld">字型</label>
+        <select id="font">
+          <option>Times New Roman</option><option>Calibri</option>
+          <option>Arial</option><option>Cambria</option><option>Georgia</option>
+        </select>
+        <label class="fld">字體大小 (pt)</label>
+        <select id="size"><option>10</option><option>11</option>
+          <option selected>12</option><option>14</option></select>
+        <label class="fld">行距</label>
+        <select id="spacing"><option>1.0</option><option selected>1.15</option>
+          <option>1.5</option><option>2.0</option></select>
+        <label class="fld">表格標題色</label>
+        <select id="tcolor">
+          <option value="D9E2F3">淡藍</option><option value="E2EFDA">淡綠</option>
+          <option value="F2F2F2">淡灰</option><option value="FCE4D6">淡橘</option>
+          <option value="E8DAEF">淡紫</option><option value="FFFFFF">無底色</option>
+        </select>
+      </div>
+      <div id="tplInfo" class="note" style="font-size:.78rem;"></div>
+
+      <details>
+        <summary>🤖 AI Prompt 範本</summary>
+        <pre id="promptText"></pre>
+      </details>
+      <details id="mtGuide">
+        <summary>📋 MathType 轉換步驟</summary>
+        <div style="font-size:.82rem">
+          <p>1. Word 開啟下載的 .docx</p>
+          <p>2. <b>MathType</b> → <b>Convert Equations</b></p>
+          <p>3. 勾選 ☑ <b>MathType translator text equations</b></p>
+          <p>4. Translator 選 <b>TeX -- AMS-LaTeX</b> → <b>Convert</b></p>
+          <p class="note" style="margin-top:.4rem">行內與展示公式皆使用單一 <b>$...$</b> 分隔符，也可選取單一公式按 <b>Alt+\\</b> 即時轉換。</p>
+        </div>
+      </details>
+    </aside>
+
+    <!-- 主區域 -->
+    <main class="main">
+      <div class="step"><span class="badge">1</span>貼上或上傳內容</div>
+      <div class="row" style="margin-bottom:.5rem">
+        <input type="file" id="file" accept=".txt,.md" style="flex:1">
+        <button class="btn btn-ghost" style="width:auto;padding:.5rem .9rem" id="clearBtn">🗑️ 清空</button>
+      </div>
+      <textarea id="input" rows="12"
+        placeholder="在此貼上 AI 產生的 Markdown + LaTeX 內容…&#10;例如：&#10;## 二次公式&#10;方程式 $ax^2+bx+c=0$ 的解為：&#10;$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$"></textarea>
+
+      <button class="btn btn-primary" id="analyzeBtn" style="margin-top:.7rem">🔍 分析內容</button>
+
+      <div id="results" class="hide">
+        <div class="step"><span class="badge">2</span>分析結果</div>
+        <div class="stat-row" id="statRow"></div>
+
+        <div class="tabs">
+          <button class="active" data-tab="preview">📄 預覽</button>
+          <button data-tab="eqs">🧮 方程式清單</button>
+        </div>
+        <div class="panel" id="tabPreview"></div>
+        <div class="panel hide" id="tabEqs"></div>
+
+        <div class="step"><span class="badge">3</span>產生並下載文件</div>
+        <button class="btn btn-primary" id="genBtn">🚀 產生 Word 文件</button>
+        <div id="genMsg"></div>
+      </div>
+
+      <div id="emptyState" class="empty">
+        <div style="font-size:2.5rem">📄</div>
+        <p>在上方輸入框貼上 AI 產出的內容，即可開始轉換</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ========== 常數 ========== */
+const AI_PROMPT =
+`請將所有產出內容放入單一「程式碼區塊 (Code block)」輸出，並嚴格遵守：
+1. 排版：使用標準 Markdown（### 標題、** 粗體）。
+2. 表格：使用標準 Markdown 表格（| ... |），表格正上方與正下方各保留一空白行。
+3. 公式：一律使用標準 LaTeX（行內用 $ $，獨立行用 $$ $$）。`;
+
+const TEMPLATES = {
+  academic:{font:"Times New Roman",size:12,spacing:1.5, tcolor:"D9E2F3",name:"學術論文"},
+  homework:{font:"Calibri",        size:11,spacing:1.15,tcolor:"E2EFDA",name:"課堂作業"},
+  exam:    {font:"Times New Roman",size:12,spacing:1.0, tcolor:"F2F2F2",name:"考卷試題"},
+};
+
+/* ========== 工具 ========== */
+const $ = s => document.querySelector(s);
+function escXml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");}
+
+/* ========== Markdown 解析 ========== */
+function parseInline(text){
+  const parts=[]; const re=/(\$[^$\n]+?\$|\*\*[^*]+?\*\*)/g;
+  let last=0,m;
+  while((m=re.exec(text))!==null){
+    if(m.index>last) parts.push({type:"text",content:text.slice(last,m.index)});
+    const raw=m[0];
+    if(raw.startsWith("$")) parts.push({type:"math",content:raw.slice(1,-1).trim()});
+    else parts.push({type:"bold",content:raw.slice(2,-2)});
+    last=re.lastIndex;
+  }
+  if(last<text.length) parts.push({type:"text",content:text.slice(last)});
+  return parts;
+}
+function isBoldOnly(parts){
+  return parts.every(p=>p.type==="bold"||(p.type==="text"&&!p.content.trim()));
+}
+function parseDocument(text){
+  text=text.replace(/\\_/g,"_");
+  const lines=text.split("\n"); const segs=[]; let i=0;
+  const isTableStart=idx=>{
+    if(idx>=lines.length||idx+1>=lines.length) return false;
+    const s=lines[idx].trim();
+    if((s.match(/\|/g)||[]).length<2) return false;
+    const sep=lines[idx+1].trim();
+    return /^[|\s:_-]+$/.test(sep)&&/-{2,}/.test(sep);
+  };
+  const isSpecial=idx=>{
+    if(idx>=lines.length) return true;
+    const s=lines[idx].trim();
+    if(!s) return true;
+    if(/^-{3,}$/.test(s)||/^\*{3,}$/.test(s)) return true;
+    if(/^#{1,6}\s+/.test(s)) return true;
+    if(s.startsWith("$$")) return true;
+    if(isTableStart(idx)) return true;
+    return false;
+  };
+  while(i<lines.length){
+    const st=lines[i].trim();
+    if(!st){i++;continue;}
+    if(/^-{3,}$/.test(st)||/^\*{3,}$/.test(st)){segs.push({type:"hr"});i++;continue;}
+    const hm=st.match(/^(#{1,6})\s+(.*)/);
+    if(hm){segs.push({type:"heading",level:hm[1].length,content:hm[2].trim()});i++;continue;}
+    if(st.startsWith("$$")){
+      const mt=st.slice(2);
+      if(mt.endsWith("$$")&&mt.length>2){
+        segs.push({type:"display_math",content:mt.slice(0,-2).trim()});i++;
+      }else{
+        const col=mt?[mt]:[];i++;
+        while(i<lines.length){
+          if(lines[i].trim().endsWith("$$")){
+            const tail=lines[i].trim().slice(0,-2);
+            if(tail) col.push(tail); i++; break;
+          }
+          col.push(lines[i]); i++;
+        }
+        segs.push({type:"display_math",content:col.join("\n").trim()});
+      }
+      continue;
+    }
+    if(isTableStart(i)){
+      const headers=st.replace(/^\|/,"").replace(/\|$/,"").split("|").map(c=>c.trim());
+      i+=2; const rows=[];
+      while(i<lines.length&&lines[i].includes("|")&&lines[i].trim()){
+        rows.push(lines[i].trim().replace(/^\|/,"").replace(/\|$/,"").split("|").map(c=>c.trim()));
+        i++;
+      }
+      segs.push({type:"table",headers,rows});continue;
+    }
+    const para=[st]; i++;
+    while(i<lines.length&&!isSpecial(i)){para.push(lines[i].trim());i++;}
+    segs.push({type:"paragraph",parts:parseInline(para.join(" "))});
+  }
+  // 合併僅含粗體的段落與下一段
+  const merged=[]; let j=0;
+  while(j<segs.length){
+    const s=segs[j];
+    if(s.type==="paragraph"&&isBoldOnly(s.parts)&&j+1<segs.length&&segs[j+1].type==="paragraph"){
+      merged.push({type:"paragraph",parts:[...s.parts,{type:"text",content:" "},...segs[j+1].parts]});
+      j+=2;
+    }else{merged.push(s);j++;}
+  }
+  return merged;
+}
+
+/* ========== 分析 ========== */
+function analyze(segs){
+  const st={inline:0,display:0,tables:0,paragraphs:0,headings:0};
+  for(const s of segs){
+    if(s.type==="display_math") st.display++;
+    else if(s.type==="heading") st.headings++;
+    else if(s.type==="table"){st.tables++;
+      (s.rows||[]).forEach(r=>r.forEach(c=>parseInline(c).forEach(p=>{if(p.type==="math")st.inline++;})));}
+    else if(s.type==="paragraph"){st.paragraphs++;
+      s.parts.forEach(p=>{if(p.type==="math")st.inline++;});}
+  }
+  st.total=st.inline+st.display;
+  return st;
+}
+function extractEqs(segs){
+  const out=[];
+  for(const s of segs){
+    if(s.type==="display_math") out.push(["展示",s.content]);
+    else if(s.type==="paragraph") s.parts.forEach(p=>{if(p.type==="math")out.push(["行內",p.content]);});
+    else if(s.type==="table")(s.rows||[]).forEach(r=>r.forEach(c=>
+      parseInline(c).forEach(p=>{if(p.type==="math")out.push(["表格",p.content]);})));
+  }
+  return out;
+}
+
+/* ========== LaTeX → MathML ========== */
+function latexToMathML(latex,display){
+  try{return temml.renderToString(latex,{displayMode:!!display,throwOnError:false,annotate:false});}
+  catch(e){return null;}
+}
+
+/* ========== MathML → OMML ========== */
+function omml(node){
+  const tag=node.localName;
+  const kids=Array.from(node.children);
+  const walkAll=ns=>ns.map(n=>omml(n)).join("");
+  switch(tag){
+    case "math": case "mrow": case "mstyle": case "mpadded": case "menclose":
+      return walkAll(kids);
+    case "semantics":
+      return kids.filter(c=>c.localName!=="annotation"&&c.localName!=="annotation-xml")
+                 .map(c=>omml(c)).join("");
+    case "annotation": case "annotation-xml": return "";
+    case "mfrac":{
+      const num=kids[0]?omml(kids[0]):"", den=kids[1]?omml(kids[1]):"";
+      return `<m:f><m:num>${num}</m:num><m:den>${den}</m:den></m:f>`;}
+    case "msqrt":
+      return `<m:rad><m:radPr><m:degHide m:val="1"/></m:radPr><m:deg/><m:e>${walkAll(kids)}</m:e></m:rad>`;
+    case "mroot":{
+      const e=kids[0]?omml(kids[0]):"", d=kids[1]?omml(kids[1]):"";
+      return `<m:rad><m:deg>${d}</m:deg><m:e>${e}</m:e></m:rad>`;}
+    case "msup":{
+      const e=kids[0]?omml(kids[0]):"", s=kids[1]?omml(kids[1]):"";
+      return `<m:sSup><m:e>${e}</m:e><m:sup>${s}</m:sup></m:sSup>`;}
+    case "msub":{
+      const e=kids[0]?omml(kids[0]):"", s=kids[1]?omml(kids[1]):"";
+      return `<m:sSub><m:e>${e}</m:e><m:sub>${s}</m:sub></m:sSub>`;}
+    case "msubsup": case "munderover":{
+      const e=kids[0]?omml(kids[0]):"", sb=kids[1]?omml(kids[1]):"", sp=kids[2]?omml(kids[2]):"";
+      return `<m:sSubSup><m:e>${e}</m:e><m:sub>${sb}</m:sub><m:sup>${sp}</m:sup></m:sSubSup>`;}
+    case "mover":{
+      if(kids.length<2) return walkAll(kids);
+      const chr=(kids[1].textContent||"").trim();
+      return `<m:acc><m:accPr><m:chr m:val="${escXml(chr)}"/></m:accPr><m:e>${omml(kids[0])}</m:e></m:acc>`;}
+    case "munder":{
+      if(kids.length<2) return walkAll(kids);
+      return `<m:sSub><m:e>${omml(kids[0])}</m:e><m:sub>${omml(kids[1])}</m:sub></m:sSub>`;}
+    case "mtable":{
+      let rows="";
+      for(const r of kids){ if(r.localName!=="mtr")continue;
+        let cells="";
+        for(const c of Array.from(r.children)){ if(c.localName!=="mtd")continue;
+          cells+=`<m:e>${walkAll(Array.from(c.children))}</m:e>`;}
+        rows+=`<m:mr>${cells}</m:mr>`;}
+      return `<m:m>${rows}</m:m>`;}
+    case "mi": case "mn": case "mo": case "mtext": case "ms":{
+      const txt=node.textContent||"";
+      let rPr="";
+      if(tag==="mi"&&[...txt].length===1) rPr=`<m:rPr><m:sty m:val="i"/></m:rPr>`;
+      return `<m:r>${rPr}<m:t xml:space="preserve">${escXml(txt)}</m:t></m:r>`;}
+    case "mspace": return "";
+    default:{
+      if(kids.length===0){
+        const t=node.textContent;
+        return t&&t.trim()?`<m:r><m:t xml:space="preserve">${escXml(t)}</m:t></m:r>`:"";
+      }
+      return walkAll(kids);
+    }
+  }
+}
+function latexToOMML(latex,display){
+  const mml=latexToMathML(latex,display);
+  let inner="";
+  if(mml){
+    try{
+      const doc=new DOMParser().parseFromString(mml,"application/xml");
+      if(!doc.getElementsByTagName("parsererror").length){
+        const math=doc.getElementsByTagName("math")[0]||doc.documentElement;
+        inner=omml(math);
+      }
+    }catch(e){}
+  }
+  if(!inner) inner=`<m:r><m:t xml:space="preserve">${escXml(latex)}</m:t></m:r>`;
+  return display
+    ? `<m:oMathPara><m:oMath>${inner}</m:oMath></m:oMathPara>`
+    : `<m:oMath>${inner}</m:oMath>`;
+}
+
+/* ========== 建立 DOCX ========== */
+function runXml(text,o){
+  let r=`<w:rPr><w:rFonts w:ascii="${o.font}" w:hAnsi="${o.font}" w:cs="${o.font}"/>`;
+  if(o.bold) r+="<w:b/>";
+  if(o.color) r+=`<w:color w:val="${o.color}"/>`;
+  r+=`<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/></w:rPr>`;
+  return `<w:r>${r}<w:t xml:space="preserve">${escXml(text)}</w:t></w:r>`;
+}
+function inlineXml(parts,opt,mmode){
+  let s="";
+  for(const p of parts){
+    if(p.type==="text") s+=runXml(p.content,{font:opt.font,sz:opt.sz});
+    else if(p.type==="bold") s+=runXml(p.content,{bold:true,font:opt.font,sz:opt.sz});
+    else if(p.type==="math"){
+      if(mmode==="latex") s+=runXml("$"+p.content+"$",{font:"Cambria Math",sz:opt.sz,color:"7B2D8B"});
+      else s+=latexToOMML(p.content,false);
+    }
+  }
+  return s;
+}
+function tableXml(headers,rows,opt,mmode){
+  const n=headers.length, cellSz=Math.max(opt.sz-2,18), col=Math.floor(9000/n);
+  const bd=["top","left","bottom","right","insideH","insideV"]
+    .map(b=>`<w:${b} w:val="single" w:sz="4" w:space="0" w:color="999999"/>`).join("");
+  let x=`<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>${bd}</w:tblBorders></w:tblPr>`;
+  x+=`<w:tblGrid>${headers.map(()=>`<w:gridCol w:w="${col}"/>`).join("")}</w:tblGrid>`;
+  x+="<w:tr>";
+  for(const h of headers){
+    x+=`<w:tc><w:tcPr><w:shd w:val="clear" w:fill="${opt.tcolor}"/><w:vAlign w:val="center"/></w:tcPr>`;
+    x+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="20" w:after="20"/></w:pPr>`
+      +runXml(h.replace(/\*\*/g,""),{bold:true,font:opt.font,sz:cellSz})+`</w:p></w:tc>`;
+  }
+  x+="</w:tr>";
+  for(const row of rows){
+    x+="<w:tr>";
+    for(let j=0;j<n;j++){
+      const txt=j<row.length?row[j]:"";
+      x+=`<w:tc><w:tcPr/><w:p><w:pPr><w:spacing w:before="10" w:after="10"/></w:pPr>`
+        +inlineXml(parseInline(txt),{font:opt.font,sz:cellSz},mmode)+`</w:p></w:tc>`;
+    }
+    x+="</w:tr>";
+  }
+  return x+"</w:tbl><w:p/>";
+}
+function bodyXml(segs,opt,mmode){
+  let x="";
+  const pp=extra=>`<w:pPr><w:spacing w:line="${opt.line}" w:lineRule="auto" w:before="40" w:after="40"/>${extra||""}</w:pPr>`;
+  for(const s of segs){
+    if(s.type==="heading"){
+      const clean=s.content.replace(/\*\*/g,"");
+      const sz=s.level===1?36:s.level===2?32:s.level===3?28:opt.sz;
+      x+=`<w:p><w:pPr><w:spacing w:before="160" w:after="60" w:line="${opt.line}" w:lineRule="auto"/></w:pPr>`
+        +runXml(clean,{bold:true,font:opt.font,sz})+`</w:p>`;
+    }else if(s.type==="hr"){
+      x+=`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="999999"/></w:pBdr></w:pPr></w:p>`;
+    }else if(s.type==="display_math"){
+      if(mmode==="latex")
+        x+=`<w:p>${pp('<w:jc w:val="center"/>')}`
+          +runXml("$"+s.content+"$",{font:"Cambria Math",sz:opt.sz,color:"7B2D8B"})+`</w:p>`;
+      else
+        x+=`<w:p>${pp('<w:jc w:val="center"/>')}${latexToOMML(s.content,true)}</w:p>`;
+    }else if(s.type==="table"){
+      x+=tableXml(s.headers,s.rows,opt,mmode);
+    }else if(s.type==="paragraph"){
+      x+=`<w:p>${pp()}${inlineXml(s.parts,{font:opt.font,sz:opt.sz},mmode)}</w:p>`;
+    }
+  }
+  return x;
+}
+async function buildDocx(segs,opt,mmode){
+  const zip=new JSZip();
+  zip.file("[Content_Types].xml",
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`);
+  zip.folder("_rels").file(".rels",
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  const w=zip.folder("word");
+  w.folder("_rels").file("document.xml.rels",
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`);
+  w.file("styles.xml",
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr>
+<w:rFonts w:ascii="${opt.font}" w:hAnsi="${opt.font}" w:cs="${opt.font}"/>
+<w:sz w:val="${opt.sz}"/><w:szCs w:val="${opt.sz}"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+</w:styles>`);
+  const doc=
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+<w:body>${bodyXml(segs,opt,mmode)}
+<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>
+</w:body></w:document>`;
+  w.file("document.xml",doc);
+  return zip.generateAsync({type:"blob",
+    mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+function download(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
+/* ========== 預覽渲染 ========== */
+function renderInlineHTML(parts){
+  return parts.map(p=>{
+    if(p.type==="text") return escHtml(p.content);
+    if(p.type==="bold") return "<strong>"+escHtml(p.content)+"</strong>";
+    if(p.type==="math"){const m=latexToMathML(p.content,false);return m||("<code>"+escHtml(p.content)+"</code>");}
+    return "";
+  }).join("");
+}
+function escHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function renderPreview(segs){
+  let h="";
+  for(const s of segs){
+    if(s.type==="heading"){const l=Math.min(s.level,4);h+=`<h${l}>${escHtml(s.content.replace(/\*\*/g,""))}</h${l}>`;}
+    else if(s.type==="hr") h+="<hr>";
+    else if(s.type==="display_math"){const m=latexToMathML(s.content,true);
+      h+=`<div style="text-align:center;margin:.8rem 0">${m||("<code>"+escHtml(s.content)+"</code>")}</div>`;}
+    else if(s.type==="paragraph") h+=`<p>${renderInlineHTML(s.parts)}</p>`;
+    else if(s.type==="table"){
+      h+="<table><thead><tr>"+s.headers.map(x=>`<th>${renderInlineHTML(parseInline(x))}</th>`).join("")+"</tr></thead><tbody>";
+      for(const r of s.rows){h+="<tr>"+s.headers.map((_,j)=>`<td>${renderInlineHTML(parseInline(r[j]||""))}</td>`).join("")+"</tr>";}
+      h+="</tbody></table>";
+    }
+  }
+  return h||"<p style='color:#9ca3af'>（無內容）</p>";
+}
+function renderEqs(eqs){
+  if(!eqs.length) return "<p style='color:#9ca3af'>未偵測到數學方程式。</p>";
+  return eqs.map((e,i)=>{
+    const [type,tex]=e;
+    const color=type==="展示"?"#0d9488":type==="行內"?"#6366f1":"#f59e0b";
+    const m=latexToMathML(tex,type==="展示");
+    return `<div class="eqitem"><b>#${i+1}</b><span class="tag" style="background:${color}">${type}</span>
+      <div style="margin:.3rem 0">${m||""}</div><code class="tex">${escHtml(tex)}</code></div>`;
+  }).join("");
+}
+
+/* ========== 介面事件 ========== */
+let currentSegs=null;
+function getOptions(){
+  const tpl=$("#tpl").value;
+  let o;
+  if(tpl==="custom"){
+    o={font:$("#font").value,size:+$("#size").value,
+       spacing:+$("#spacing").value,tcolor:$("#tcolor").value};
+  }else{o={...TEMPLATES[tpl]};}
+  return {font:o.font,sz:o.size*2,line:Math.round(o.spacing*240),tcolor:o.tcolor,
+          size:o.size,spacing:o.spacing};
+}
+function refreshTplInfo(){
+  const tpl=$("#tpl").value;
+  $("#customBox").classList.toggle("hide",tpl!=="custom");
+  if(tpl==="custom"){$("#tplInfo").classList.add("hide");return;}
+  const t=TEMPLATES[tpl];
+  $("#tplInfo").classList.remove("hide");
+  $("#tplInfo").textContent=`字型 ${t.font} · ${t.size}pt · 行距 ${t.spacing}`;
+}
+function getMode(){return document.querySelector('input[name=mode]:checked').value;}
+
+$("#promptText").textContent=AI_PROMPT;
+refreshTplInfo();
+$("#tpl").addEventListener("change",refreshTplInfo);
+
+$("#file").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{$("#input").value=ev.target.result;};
+  rd.readAsText(f,"utf-8");
+});
+$("#clearBtn").addEventListener("click",()=>{
+  $("#input").value="";$("#file").value="";
+  $("#results").classList.add("hide");$("#emptyState").classList.remove("hide");
+  $("#genMsg").innerHTML="";currentSegs=null;
+});
+
+$("#analyzeBtn").addEventListener("click",()=>{
+  const text=$("#input").value;
+  if(!text.trim()){alert("請先輸入內容");return;}
+  currentSegs=parseDocument(text);
+  const st=analyze(currentSegs), eqs=extractEqs(currentSegs);
+  $("#statRow").innerHTML=
+    `<div class="stat"><div class="num">${st.total}</div><div class="lbl">方程式總數</div></div>
+     <div class="stat"><div class="num">${st.inline}</div><div class="lbl">行內公式</div></div>
+     <div class="stat"><div class="num">${st.display}</div><div class="lbl">展示公式</div></div>
+     <div class="stat"><div class="num">${st.tables}</div><div class="lbl">表格</div></div>
+     <div class="stat"><div class="num">${st.headings}</div><div class="lbl">標題</div></div>`;
+  $("#tabPreview").innerHTML=renderPreview(currentSegs);
+  $("#tabEqs").innerHTML=renderEqs(eqs);
+  $("#emptyState").classList.add("hide");
+  $("#results").classList.remove("hide");
+  $("#genMsg").innerHTML="";
+});
+
+document.querySelectorAll(".tabs button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    const t=b.dataset.tab;
+    $("#tabPreview").classList.toggle("hide",t!=="preview");
+    $("#tabEqs").classList.toggle("hide",t!=="eqs");
+  });
+});
+
+$("#genBtn").addEventListener("click",async()=>{
+  if(!currentSegs){alert("請先分析內容");return;}
+  const btn=$("#genBtn");btn.disabled=true;btn.textContent="⏳ 轉換中…";
+  try{
+    const mode=getMode();
+    const mmode=(mode==="mathtype")?"latex":"omml";
+    const opt=getOptions();
+    const blob=await buildDocx(currentSegs,opt,mmode);
+    const name=mmode==="latex"?"mathdoc_mathtype.docx":"mathdoc_omml.docx";
+    download(blob,name);
+    $("#genMsg").innerHTML= mmode==="latex"
+      ? `<div class="note">✅ 已下載！所有公式皆使用單一 <b>$...$</b> 分隔符。<br>下一步：Word 開啟 → MathType → Convert Equations → 勾選 <b>MathType translator text equations</b> → Translator 選 <b>TeX -- AMS-LaTeX</b> → Convert。</div>`
+      : `<div class="note">✅ 已下載！公式已是 Word 原生方程式，可直接在 Word 編輯。</div>`;
+  }catch(err){
+    $("#genMsg").innerHTML=`<div class="warn">轉換失敗：${escHtml(err.message||String(err))}</div>`;
+  }finally{
+    btn.disabled=false;btn.textContent="🚀 產生 Word 文件";
+  }
+});
+</script>
+</body>
+</html>
